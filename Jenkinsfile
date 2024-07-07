@@ -2,22 +2,23 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials-id')  // DockerHub credentials stored in Jenkins
-        BACKEND_IMAGE = "<your_dockerhub_username>/port-manager-backend"
-        FRONTEND_IMAGE = "<your_dockerhub_username>/port-manager-frontend"
+        DOCKERHUB_CREDENTIALS = credentials('docker_hub_login')  // DockerHub credentials stored in Jenkins
+        BACKEND_IMAGE = "deeeye2/port-manager-backend"
+        FRONTEND_IMAGE = "deeeye2/port-manager-frontend"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                // Checkout the code from the provided GitHub repository
+                git url: 'https://github.com/deeeye2/dev-k8s-port-.git', branch: 'main'
             }
         }
         
         stage('Build Backend Image') {
             steps {
                 script {
-                    dir('backend') {  // Assuming the backend Dockerfile and code are in the 'backend' directory
+                    dir('backend') {
                         sh 'docker build -t $BACKEND_IMAGE:latest .'
                     }
                 }
@@ -37,7 +38,7 @@ pipeline {
         stage('Build Frontend Image') {
             steps {
                 script {
-                    dir('frontend') {  // Assuming the frontend Dockerfile and code are in the 'frontend' directory
+                    dir('frontend') {
                         sh 'docker build -t $FRONTEND_IMAGE:latest .'
                     }
                 }
