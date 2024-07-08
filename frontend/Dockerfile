@@ -13,6 +13,10 @@ RUN npm install
 # Copy the rest of the application files
 COPY . .
 
+# Pass environment variables to the build process
+ARG REACT_APP_BACKEND_IP
+ENV REACT_APP_BACKEND_IP=${REACT_APP_BACKEND_IP}
+
 # Build the application
 RUN npm run build
 
