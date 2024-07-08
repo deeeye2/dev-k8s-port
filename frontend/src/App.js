@@ -1,27 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { Bar, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const App = () => {
     const [usedPorts, setUsedPorts] = useState([]);
+    const [pods, setPods] = useState([]);
+    const [deployments, setDeployments] = useState([]);
+    const [services, setServices] = useState([]);
     const [newPort, setNewPort] = useState('');
     const [serviceName, setServiceName] = useState('');
     const [namespace, setNamespace] = useState('');
     const [message, setMessage] = useState('');
-    const [k8sResources, setK8sResources] = useState({});
+
+    const [chatInput, setChatInput] = useState('');
+    const [chatMessages, setChatMessages] = useState([]);
+    const [cliInput, setCliInput] = useState('');
+    const [cliOutput, setCliOutput] = useState([]);
 
     useEffect(() => {
         fetch(`http://${process.env.REACT_APP_BACKEND_IP}:5000/ports/used`)
             .then(response => response.json())
             .then(data => setUsedPorts(data));
-    }, []);
 
-    useEffect(() => {
-        fetch(`http://${process.env.REACT_APP_BACKEND_IP}:5000/k8s/resources`)
+        fetch(`http://${process.env.REACT_APP_BACKEND_IP}:5000/k8s/pods`)
             .then(response => response.json())
-            .then(data => setK8sResources(data));
+            .then(data => setPods(data));
+
+        fetch(`http://${process.env.REACT_APP_BACKEND_IP}:5000/k8s/deployments`)
+            .then(response => response.json())
+            .then(data => setDeployments(data));
+
+        fetch(`http://${process.env.REACT_APP_BACKEND_IP}:5000/k8s/services`)
+            .then(response => response.json())
+            .then(data => setServices(data));
     }, []);
 
     const openPort = () => {
@@ -43,44 +56,61 @@ const App = () => {
             });
     };
 
-    const portChartData = {
-        labels: usedPorts.map(port => `${port.service}:${port.port}`),
+    const handleChatSubmit = (e) => {
+        e.preventDefault();
+        // Simulate AI response
+        const aiResponse = `AI: You said "${chatInput}"`;
+        setChatMessages([...chatMessages, `You: ${chatInput}`, aiResponse]);
+        setChatInput('');
+    };
+
+    const handleCliSubmit = (e) => {
+        e.preventDefault();
+        // Simulate CLI command execution
+        let output;
+        switch(cliInput) {
+            case 'status':
+                output = 'CLI: System is running.';
+                break;
+            case 'pods':
+                output = `CLI: Pods running: ${pods.length}`;
+                break;
+            default:
+                output = `CLI: Unknown command "${cliInput}"`;
+        }
+        setCliOutput([...cliOutput, `> ${cliInput}`, output]);
+        setCliInput('');
+    };
+
+    const podChartData = {
+        labels: pods.map(pod => `${pod.name} (${pod.namespace})`),
         datasets: [{
-            label: 'Ports',
-            data: usedPorts.map(port => port.port),
-            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            label: 'Pods',
+            data: pods.map(pod => pod.status === 'Running' ? 1 : 0),
+            backgroundColor: pods.map(pod => pod.status === 'Running' ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
             borderColor: 'rgba(75, 192, 192, 1)',
             borderWidth: 1
         }]
     };
 
-    const k8sChartData = {
-        labels: Object.keys(k8sResources),
+    const deploymentChartData = {
+        labels: deployments.map(dep => `${dep.name} (${dep.namespace})`),
         datasets: [{
-            label: 'K8s Resources',
-            data: Object.values(k8sResources),
-            backgroundColor: [
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-                'rgba(255, 159, 64, 0.6)',
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(255, 205, 86, 0.6)',
-                'rgba(54, 162, 235, 0.6)'
-            ],
-            borderColor: [
-                'rgba(75, 192, 192, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)',
-                'rgba(255, 99, 132, 1)',
-                'rgba(255, 205, 86, 1)',
-                'rgba(54, 162, 235, 1)'
-            ],
+            label: 'Deployments',
+            data: deployments.map(dep => dep.replicas),
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    const serviceChartData = {
+        labels: services.map(svc => `${svc.name} (${svc.namespace})`),
+        datasets: [{
+            label: 'Services',
+            data: services.map(svc => svc.ports.length),
+            backgroundColor: 'rgba(255, 206, 86, 0.6)',
+            borderColor: 'rgba(255, 206, 86, 1)',
             borderWidth: 1
         }]
     };
@@ -89,7 +119,13 @@ const App = () => {
         <div>
             <h1>Port Manager</h1>
             <h2>Used Ports</h2>
-            <Bar data={portChartData} />
+            <Bar data={podChartData} />
+            <h2>Kubernetes Pods</h2>
+            <Bar data={podChartData} />
+            <h2>Kubernetes Deployments</h2>
+            <Bar data={deploymentChartData} />
+            <h2>Kubernetes Services</h2>
+            <Bar data={serviceChartData} />
             <h2>Open a New Port</h2>
             <input
                 type="number"
@@ -111,8 +147,42 @@ const App = () => {
             />
             <button onClick={openPort}>Open Port</button>
             {message && <p>{message}</p>}
-            <h2>Kubernetes Resources</h2>
-            <Doughnut data={k8sChartData} />
+
+            <h2>AI Chat</h2>
+            <div>
+                <form onSubmit={handleChatSubmit}>
+                    <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Type your message"
+                    />
+                    <button type="submit">Send</button>
+                </form>
+                <div>
+                    {chatMessages.map((msg, index) => (
+                        <p key={index}>{msg}</p>
+                    ))}
+                </div>
+            </div>
+
+            <h2>CLI</h2>
+            <div>
+                <form onSubmit={handleCliSubmit}>
+                    <input
+                        type="text"
+                        value={cliInput}
+                        onChange={(e) => setCliInput(e.target.value)}
+                        placeholder="Type your command"
+                    />
+                    <button type="submit">Execute</button>
+                </form>
+                <div>
+                    {cliOutput.map((output, index) => (
+                        <p key={index}>{output}</p>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };
