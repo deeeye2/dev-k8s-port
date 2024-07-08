@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('docker_hub_login')  // DockerHub credentials stored in Jenkins
-        BACKEND_IMAGE = "deeeye2/port-manager-backend"
-        FRONTEND_IMAGE = "deeeye2/port-manager-frontend"
+        BACKEND_IMAGE = "deeeye2/port-manager-softwear"
+        FRONTEND_IMAGE = "deeeye2/port-manager-UI"
     }
 
     stages {
@@ -19,7 +19,7 @@ pipeline {
             steps {
                 script {
                     dir('backend') {
-                        sh 'docker build -t $BACKEND_IMAGE:latest .'
+                        sh 'docker build -t $BACKEND_IMAGE:V1.0.1 .'
                     }
                 }
             }
@@ -29,7 +29,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'DOCKERHUB_CREDENTIALS') {
-                        sh 'docker push $BACKEND_IMAGE:latest'
+                        sh 'docker push $BACKEND_IMAGE:V1.0.1'
                     }
                 }
             }
@@ -39,7 +39,7 @@ pipeline {
             steps {
                 script {
                     dir('frontend') {
-                        sh 'docker build -t $FRONTEND_IMAGE:latest .'
+                        sh 'docker build -t $FRONTEND_IMAGE:V1.0.1 .'
                     }
                 }
             }
@@ -49,7 +49,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'DOCKERHUB_CREDENTIALS') {
-                        sh 'docker push $FRONTEND_IMAGE:latest'
+                        sh 'docker push $FRONTEND_IMAGE:V1.0.1'
                     }
                 }
             }
@@ -60,8 +60,8 @@ pipeline {
         always {
             script {
                 // Clean up any leftover Docker images
-                sh 'docker rmi $BACKEND_IMAGE:latest || true'
-                sh 'docker rmi $FRONTEND_IMAGE:latest || true'
+                sh 'docker rmi $BACKEND_IMAGE:V1.0.1 || true'
+                sh 'docker rmi $FRONTEND_IMAGE:V1.0.1|| true'
             }
         }
         success {
