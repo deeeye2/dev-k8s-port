@@ -12,13 +12,13 @@ const App = () => {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        fetch('http://<BACKEND_IP>:5000/ports/used')  // Replace <BACKEND_IP> with your backend's IP address
+        fetch(`http://${process.env.REACT_APP_BACKEND_IP}:5000/ports/used`)
             .then(response => response.json())
             .then(data => setUsedPorts(data));
     }, []);
 
     const openPort = () => {
-        fetch('http://<BACKEND_IP>:5000/ports/open', {  // Replace <BACKEND_IP> with your backend's IP address
+        fetch(`http://${process.env.REACT_APP_BACKEND_IP}:5000/ports/open`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -78,3 +78,4 @@ const App = () => {
 };
 
 export default App;
+
