@@ -1,21 +1,20 @@
-# Use the official Python image as the base
+# Use the official Python image from the Docker Hub
 FROM python:3.8-slim
 
 # Set the working directory
 WORKDIR /app
 
-# Copy requirements.txt
-COPY requirements.txt requirements.txt
+# Copy requirements.txt first to leverage Docker cache
+COPY requirements.txt .
 
-# Upgrade pip and install dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application files
+# Copy the rest of the application code
 COPY . .
 
-# Expose the application port
+# Expose the port the app runs on
 EXPOSE 5000
 
-# Run the application
+# Command to run the application
 CMD ["python", "app.py"]
