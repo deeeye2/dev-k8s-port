@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from kubernetes import client, config
+from urllib.parse import quote as url_quote  # Updated import
 
 app = Flask(__name__)
 
