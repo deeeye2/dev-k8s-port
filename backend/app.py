@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 from kubernetes import client, config
-from urllib.parse import quote as url_quote  # Updated import
 
 app = Flask(__name__)
 
@@ -8,6 +7,7 @@ app = Flask(__name__)
 config.load_kube_config()
 
 v1 = client.CoreV1Api()
+apps_v1 = client.AppsV1Api()
 
 @app.route('/ports/used', methods=['GET'])
 def used_ports():
@@ -32,5 +32,21 @@ def open_new_port():
 
     return jsonify({"message": "Port opened successfully"}), 200
 
+@app.route('/k8s/resources', methods=['GET'])
+def k8s_resources():
+    resources = {
+        "pods": len(v1.list_pod_for_all_namespaces().items),
+        "services": len(v1.list_service_for_all_namespaces().items),
+        "deployments": len(apps_v1.list_deployment_for_all_namespaces().items),
+        "statefulsets": len(apps_v1.list_stateful_set_for_all_namespaces().items),
+        "daemonsets": len(apps_v1.list_daemon_set_for_all_namespaces().items),
+        "nodes": len(v1.list_node().items),
+        "replicasets": len(apps_v1.list_replica_set_for_all_namespaces().items),
+        "jobs": len(client.BatchV1Api().list_job_for_all_namespaces().items),
+        "cronjobs": len(client.BatchV1beta1Api().list_cron_job_for_all_namespaces().items)
+    }
+    return jsonify(resources)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+
